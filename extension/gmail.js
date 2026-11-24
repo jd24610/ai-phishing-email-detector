@@ -74,27 +74,47 @@ const PhishGmail = (() => {
   }
 
   // Does this text start like a raw email (header lines like "From: ...")?
+  // We look at the whole header section, up to the first blank line.
+  // Real Gmail tested: a Google security email had ~6,600 characters of
+  // signature headers (ARC, DKIM) before its "From:" line, so a fixed
+  // "first 5,000 characters" window was too small.
   function looksLikeEmail(text) {
     if (!text) return false;
-    const head = text.slice(0, 5000);
-    return /^(Delivered-To|Received|Return-Path|ARC-[\w-]+|DKIM-Signature|MIME-Version|From|Date|Subject|X-[\w-]+):/im.test(head)
-      && /^From:/im.test(head);
+    const start = text.replace(/^\s+/, "").slice(0, 200_000);
+    const blank = start.search(/\r?\n\r?\n/);
+    const head = blank === -1 ? start : start.slice(0, blank);
+    return /^[A-Za-z][A-Za-z0-9-]*:/.test(head) && /^From:/im.test(head);
+  }
+
+  // Turn "&lt;b&gt; &amp; &#39;" back into "<b> & '".
+  function decodeEntities(text) {
+    const named = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+    return text.replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z]+);/gi, (whole, code) => {
+      const c = code.toLowerCase();
+      if (c in named) return named[c];
+      if (c[0] !== "#") return whole;
+      const n = c[1] === "x" ? parseInt(c.slice(2), 16) : parseInt(c.slice(1), 10);
+      return n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : whole;
+    });
   }
 
   // Pull the raw email out of a Show original response.
-  // - Plain text download: the whole response is the email.
-  // - HTML page: the email sits inside a <pre>. We try Gmail's usual
-  //   id first, then any <pre> that looks like an email.
-  // DOMParser builds a detached document: nothing in it runs or loads.
+  //
+  // Why not DOMParser? Gmail turns on a browser protection called
+  // "Trusted Types", which can block DOMParser on its pages. Tested on real
+  // Gmail: DOMParser threw "This document requires 'TrustedHTML' assignment."
+  // So we cut the text out of the <pre> ourselves and decode it. We never
+  // put this HTML into any page, so nothing in it can run.
   function extractRaw(body, contentType = "text/html") {
     if (!contentType.includes("html")) {
       return looksLikeEmail(body) ? body : null;
     }
-    const doc = new DOMParser().parseFromString(body, "text/html");
-    const known = doc.querySelector("#raw_message_text, pre.raw_message_text");
-    if (known && looksLikeEmail(known.textContent)) return known.textContent;
-    for (const pre of doc.querySelectorAll("pre")) {
-      if (looksLikeEmail(pre.textContent)) return pre.textContent;
+    const pres = [...body.matchAll(/<pre\b([^>]*)>([\s\S]*?)<\/pre>/gi)];
+    // Gmail's usual spot first, then any <pre> that looks like an email.
+    pres.sort((a, b) => /raw_message_text/.test(b[1]) - /raw_message_text/.test(a[1]));
+    for (const [, , inner] of pres) {
+      const text = decodeEntities(inner.replace(/<[^>]*>/g, ""));
+      if (looksLikeEmail(text)) return text;
     }
     return null;
   }
@@ -113,5 +133,5 @@ const PhishGmail = (() => {
   }
 
   return { accountPath, isMessageId, permId, originalUrl, originalUrls, findIk,
-           looksLikeEmail, extractRaw, openMessages, bannerAnchor };
+           looksLikeEmail, decodeEntities, extractRaw, openMessages, bannerAnchor };
 })();

@@ -46,6 +46,12 @@ MESSAGES = {
 MISSING_ID = "18c2f0a1b2c3d4e8"  # "Show original" will fail for this one
 
 
+# Real Google emails can have 6,000+ characters of signature headers before "From:".
+LONG_HEADERS = "".join(
+    f"ARC-Message-Signature: i={i}; a=rsa-sha256; c=relaxed/relaxed; d=example.com;\r\n"
+    f"        b={'Ab3' * 600}\r\n" for i in range(1, 4))
+
+
 def perm(hex_id):
     return f"msg-f:{int(hex_id, 16)}"
 
@@ -59,30 +65,40 @@ def message_html(hex_id, sender, subject, body="(email body)"):
     </div>"""
 
 
-INBOX = """<!DOCTYPE html><html><head><title>Inbox - Gmail (fake)</title></head>
+FAKE_IK = "a1b2c3d4e5"
+
+# Real Gmail (checked 2026-11-24) puts its account key "ik" as the 10th item
+# of a GLOBALS array in an inline script. Show original needs it.
+INBOX = """<!DOCTYPE html><html><head><title>Inbox - Gmail (fake)</title>
+<script>var GLOBALS=[null,null,1,"x","y",null,0,"z","w","FAKE_IK_HERE",1];</script></head>
 <body style="margin:0;font-family:Arial;background:#f6f8fc">
 <div style="background:#fff;padding:10px 16px;font:500 18px Arial;border-bottom:1px solid #ddd">Gmail (fake test page)</div>
 <div id="thread" style="max-width:820px;margin:16px auto;background:#fff;padding:8px 20px;border-radius:12px"></div>
-</body></html>"""
+</body></html>""".replace("FAKE_IK_HERE", FAKE_IK)
 
 
 def fake_gmail(route):
     url = route.request.url
     query = parse_qs(urlsplit(url).query)  # decodes %3A back to ":" like a real server
-    if query.get("view") == ["om"]:
+    if query.get("view") == ["om"] and query.get("ik") == [FAKE_IK]:
         for hex_id, (sample, *_rest) in MESSAGES.items():
             if query.get("permmsgid") == [perm(hex_id)]:
-                raw = (SAMPLES / sample).read_text(errors="replace")
+                raw = LONG_HEADERS + (SAMPLES / sample).read_text(errors="replace")
                 page = f'<html><body><pre class="raw_message_text" id="raw_message_text">{html.escape(raw)}</pre></body></html>'
                 return route.fulfill(status=200, content_type="text/html", body=page)
         return route.fulfill(status=404, content_type="text/html", body="Not found")
-    return route.fulfill(status=200, content_type="text/html", body=INBOX)
+    return route.fulfill(status=200, content_type="text/html", body=INBOX,
+                         headers={"Content-Security-Policy": "require-trusted-types-for 'script'"})
 
 
 def open_email(page, hex_id, sender, subject, body):
     """Simulate Gmail swapping in a new opened message (no page reload)."""
-    page.evaluate("(h) => { document.getElementById('thread').innerHTML = h; }",
-                  message_html(hex_id, sender, subject, body))
+    # The page has Trusted Types on (like real Gmail), so the fake Gmail
+    # uses its own policy to update the page, just as Gmail does.
+    page.evaluate("""(h) => {
+        window.__fakeGmailPolicy ||= trustedTypes.createPolicy('fake-gmail', { createHTML: (s) => s });
+        document.getElementById('thread').innerHTML = window.__fakeGmailPolicy.createHTML(h);
+    }""", message_html(hex_id, sender, subject, body))
 
 
 def wait_for_banner(page, text_hint, timeout=8000):

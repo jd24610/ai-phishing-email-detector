@@ -92,7 +92,7 @@ How it stays private and safe:
 - The banner sits in a closed shadow root and shows email text with `textContent` only, so a scam email can't inject code into it or change what it says.
 - Each email is scanned once per page load.
 
-Heads up: Gmail has no official API for extensions to read an open email. The extension relies on Gmail's page layout (`data-legacy-message-id`, `.a3s`) and its "Show original" URL. If Google changes those, `extension/gmail.js` is the one file to update. Very large emails may be cut off in Gmail's "Show original" view.
+Heads up: Gmail has no official API for extensions to read an open email. The extension relies on Gmail's page layout (`data-legacy-message-id`, `.a3s`), its account key (`ik`), and its "Show original" URL. Checked on real Gmail in November 2026: Show original returns 404 without `ik`, Gmail enforces Trusted Types (so `DOMParser` is not used), and Google emails can have 6,000+ characters of headers before `From:`. The fake Gmail in `dev/e2e_extension.py` copies all three. If Google changes those, `extension/gmail.js` is the one file to update. Very large emails may be cut off in Gmail's "Show original" view.
 
 To check a real email by hand: in Gmail, open the message, click the three dots, then **Download message**. Run the tool on that `.eml` file. Keep real emails in `private_samples/` (it's git-ignored).
 
