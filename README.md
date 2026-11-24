@@ -59,7 +59,7 @@ cd ai-phishing-email-detector
 python3 main.py samples/sample_ceo_fraud.eml
 python3 main.py samples/sample_phish.eml --details   # also shows the parsed email
 
-python3 -m unittest discover tests                    # 100 tests
+python3 -m unittest discover tests                    # 101 tests
 ```
 
 ### Web page
@@ -72,7 +72,29 @@ Then open **http://127.0.0.1:8765** and drop an `.eml` file on the page. It show
 
 ![Web page showing a Likely phishing verdict](docs/screenshot.png)
 
-To check a real email: in Gmail, open the message, click the three dots, then **Download message**. Run the tool on that `.eml` file. Keep real emails in `private_samples/` (it's git-ignored).
+### Chrome extension (scans Gmail automatically)
+
+When you open an email in Gmail, the extension grabs its raw source (the same thing Gmail's "Show original" shows), sends it to the detector running on your computer, and puts a banner above the message.
+
+![Extension banner in Gmail](docs/extension.png)
+
+1. Start the detector: `python3 server.py` (leave it running)
+2. In Chrome, go to `chrome://extensions` and turn on **Developer mode** (top right)
+3. Click **Load unpacked** and pick the `extension` folder
+4. Open Gmail and open any email
+
+Click the shield icon in the toolbar to see if the detector is running or to turn auto-scan off.
+
+How it stays private and safe:
+- Emails only go to `127.0.0.1`. Nothing is sent online.
+- The extension can only touch `mail.google.com` and `127.0.0.1:8765`.
+- Its ID is fixed (`amibjogglnglgnopfajdejkgeolfnljd`) by a public key in the manifest, and the server only accepts this extension. Websites and other extensions are refused.
+- The banner sits in a closed shadow root and shows email text with `textContent` only, so a scam email can't inject code into it or change what it says.
+- Each email is scanned once per page load.
+
+Heads up: Gmail has no official API for extensions to read an open email. The extension relies on Gmail's page layout (`data-legacy-message-id`, `.a3s`) and its "Show original" URL. If Google changes those, `extension/gmail.js` is the one file to update. Very large emails may be cut off in Gmail's "Show original" view.
+
+To check a real email by hand: in Gmail, open the message, click the three dots, then **Download message**. Run the tool on that `.eml` file. Keep real emails in `private_samples/` (it's git-ignored).
 
 ## The ML model (and what went wrong with it)
 
@@ -117,6 +139,8 @@ python3 ml/train_model.py
 main.py                  Command-line tool: verdict, findings, limits
 server.py                Local web server (127.0.0.1 only)
 web/                     The web page (HTML, CSS, JS)
+extension/               Chrome extension (Manifest V3) for Gmail
+dev/e2e_extension.py     End-to-end extension test against a fake Gmail
 detector/
   parser.py              Turns a raw .eml into structured data
   headers.py             SPF / DKIM / DMARC and address mismatches
@@ -131,7 +155,7 @@ detector/
   model/phish_model.json Trained model weights
 ml/train_model.py        Training and evaluation script
 samples/                 Test emails (all fake, all safe)
-tests/                   100 unit tests
+tests/                   101 unit tests
 ```
 
 ## Known limitations
@@ -155,7 +179,8 @@ tests/                   100 unit tests
 - [x] Local web page to drop emails into
 - [ ] Retrain the model on modern email
 - [ ] Optional free local LLM (Ollama) for plain-English explanations
-- [ ] Chrome extension that talks to the local server
+- [x] Chrome extension that scans Gmail emails as you open them
+- [ ] Run the detector inside the extension (Pyodide) so no server is needed
 
 ## Author
 

@@ -56,14 +56,20 @@ SECURITY_HEADERS = {
 }
 
 
+# Our own extension's ID. It's fixed by the public "key" in
+# extension/manifest.json, so it's the same on every computer.
+OUR_EXTENSION_ID = "amibjogglnglgnopfajdejkgeolfnljd"
+
+
 def extension_origins():
     """
-    Chrome extension IDs allowed to call the API, from an environment variable:
+    Chrome extensions allowed to call the API: ours, plus any extra IDs in
         PHISH_EXTENSION_IDS=abcdefghijklmnop...   (comma-separated)
-    Empty by default, so no extension is trusted until you say so.
+    Every other extension is refused.
     """
-    ids = os.environ.get("PHISH_EXTENSION_IDS", "")
-    return {f"chrome-extension://{i.strip()}" for i in ids.split(",") if i.strip()}
+    ids = {OUR_EXTENSION_ID}
+    ids |= {i.strip() for i in os.environ.get("PHISH_EXTENSION_IDS", "").split(",") if i.strip()}
+    return {f"chrome-extension://{i}" for i in ids}
 
 
 def report_to_dict(email, report):

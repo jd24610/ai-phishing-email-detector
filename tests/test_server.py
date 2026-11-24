@@ -126,6 +126,13 @@ class ServerTest(unittest.TestCase):
         finally:
             del os.environ["PHISH_EXTENSION_IDS"]
 
+    def test_our_extension_allowed_by_default(self):
+        origin = "chrome-extension://amibjogglnglgnopfajdejkgeolfnljd"
+        raw = (SAMPLES / "sample_legit.eml").read_bytes()
+        resp, _ = self.post_email(raw, origin=origin)
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.getheader("Access-Control-Allow-Origin"), origin)
+
     def test_unknown_extension_blocked(self):
         resp, _ = self.request("OPTIONS", "/api/analyze",
                                headers={"Origin": "chrome-extension://someoneelsesextension"})

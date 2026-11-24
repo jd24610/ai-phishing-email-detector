@@ -2,3 +2,5 @@
 # The detector itself runs on plain Python with no extra packages.
 pandas>=2.0
 scikit-learn>=1.3
+# Only for dev/e2e_extension.py (extension test with a real browser)
+playwright>=1.40

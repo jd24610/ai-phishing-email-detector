@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Phishing Email Detector</h1>
+
+  <div class="row">
+    <span>Detector</span>
+    <span id="server" class="pill">Checking...</span>
+  </div>
+  <p id="help" class="help" hidden>
+    Start it on your computer:<br><code>python3 server.py</code>
+  </p>
+
+  <label class="row toggle">
+    <span>Scan emails when I open them</span>
+    <input id="auto" type="checkbox">
+  </label>
+
+  <p class="foot">Emails are only sent to the detector on this computer. Nothing goes online.</p>
+  <script src="popup.js"></script>
+</body>
+</html>

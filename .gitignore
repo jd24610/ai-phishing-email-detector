@@ -11,3 +11,6 @@ private_samples/
 
 # Training dataset (52 MB, public). Download it instead of committing it.
 data/
+
+# Screenshots from dev/e2e_extension.py
+dev/screenshots/
