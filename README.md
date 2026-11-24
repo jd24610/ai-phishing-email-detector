@@ -59,8 +59,18 @@ cd ai-phishing-email-detector
 python3 main.py samples/sample_ceo_fraud.eml
 python3 main.py samples/sample_phish.eml --details   # also shows the parsed email
 
-python3 -m unittest discover tests                    # 88 tests
+python3 -m unittest discover tests                    # 100 tests
 ```
+
+### Web page
+
+```bash
+python3 server.py
+```
+
+Then open **http://127.0.0.1:8765** and drop an `.eml` file on the page. It shows the verdict, top reasons, every finding by category, and the limits of the check.
+
+![Web page showing a Likely phishing verdict](docs/screenshot.png)
 
 To check a real email: in Gmail, open the message, click the three dots, then **Download message**. Run the tool on that `.eml` file. Keep real emails in `private_samples/` (it's git-ignored).
 
@@ -97,12 +107,16 @@ python3 ml/train_model.py
 - **No pickle.** Loading a pickle file can run code, so the model is stored as plain JSON with a size limit and field checks.
 - **Input limits.** 10 MB max email, 100 links max, 50k characters of text scanned.
 - **Minimal logging.** Email bodies are only previewed (200 characters), never dumped.
+- **The local server is locked down.** It only listens on `127.0.0.1`, checks the `Host` header to block DNS rebinding, only accepts requests from its own page (and later, our own extension ID), never logs email content, and sends a strict Content Security Policy.
+- **No XSS from email content.** The page inserts every piece of email text with `textContent`, never `innerHTML`. A test email with `<script>` in its subject shows up as plain text.
 - **Test samples are safe.** They use reserved `.example` domains and `203.0.113.x` IPs, and the "malware" is harmless text.
 
 ## Project structure
 
 ```
 main.py                  Command-line tool: verdict, findings, limits
+server.py                Local web server (127.0.0.1 only)
+web/                     The web page (HTML, CSS, JS)
 detector/
   parser.py              Turns a raw .eml into structured data
   headers.py             SPF / DKIM / DMARC and address mismatches
@@ -117,7 +131,7 @@ detector/
   model/phish_model.json Trained model weights
 ml/train_model.py        Training and evaluation script
 samples/                 Test emails (all fake, all safe)
-tests/                   88 unit tests
+tests/                   100 unit tests
 ```
 
 ## Known limitations
@@ -138,10 +152,10 @@ tests/                   88 unit tests
 - [x] Zip archive inspection
 - [ ] HTML tricks: hidden text, login forms inside emails
 - [ ] Public Suffix List for correct domain handling
-- [ ] Local web page to drop emails into
+- [x] Local web page to drop emails into
 - [ ] Retrain the model on modern email
 - [ ] Optional free local LLM (Ollama) for plain-English explanations
-- [ ] Chrome extension
+- [ ] Chrome extension that talks to the local server
 
 ## Author
 
