@@ -56,10 +56,14 @@
     inFlight.add(id);
     showBanner(el, renderStatus("Checking this email for phishing..."));
     try {
-      const raw = await fetchOriginal(id);
+      const { raw, tried } = await fetchOriginal(id);
       if (!raw) {
+        // Show what we tried (formats and status codes only, never email content),
+        // so a real-Gmail failure can be fixed without guessing.
+        const summary = tried.map((t) => `${t.name}: ${t.result}`).join(" | ");
+        console.warn("[Phishing Detector] Couldn't get the original email.", tried);
         return showBanner(el, renderStatus(
-          "Couldn't read this email's original source. Gmail may have changed its page.", true));
+          `Couldn't read this email's original source. Tried: ${summary}`, true));
       }
       const answer = await chrome.runtime.sendMessage({ type: "analyze", raw });
       if (!answer || !answer.ok) {
@@ -76,11 +80,28 @@
 
   // Ask Gmail for the raw email, the same way its "Show original" menu does.
   // Same-site request, so your normal Gmail login is used. Nothing new is shared.
+  // We try each known address format until one gives back a real email.
+  let ik; // Gmail's account key, looked up once per page
   async function fetchOriginal(id) {
-    const url = PhishGmail.originalUrl(location.pathname, id);
-    const res = await fetch(url, { credentials: "same-origin" });
-    if (!res.ok) return null;
-    return PhishGmail.extractRaw(await res.text());
+    if (ik === undefined) ik = PhishGmail.findIk();
+    const tried = [];
+    for (const { name, url } of PhishGmail.originalUrls(location.pathname, id, ik)) {
+      try {
+        const res = await fetch(url, { credentials: "same-origin" });
+        const type = res.headers.get("content-type") || "";
+        if (!res.ok) { tried.push({ name, result: `HTTP ${res.status}` }); continue; }
+        if (!res.url.startsWith("https://mail.google.com/")) {
+          tried.push({ name, result: "redirected away" }); continue;
+        }
+        const raw = PhishGmail.extractRaw(await res.text(), type);
+        if (raw) return { raw, tried };
+        tried.push({ name, result: `200 ${type.split(";")[0] || "?"}, no email found` });
+      } catch {
+        tried.push({ name, result: "network error" });
+      }
+    }
+    if (!ik) tried.push({ name: "ik", result: "not found on page" });
+    return { raw: null, tried };
   }
 
   // ---------- the banner ----------
