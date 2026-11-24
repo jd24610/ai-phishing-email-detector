@@ -1,0 +1,60 @@
+Return-Path: <billing@vendor-invoices.example>
+Authentication-Results: mx.recipient.example; spf=pass
+ smtp.mailfrom=vendor-invoices.example; dkim=pass
+ header.d=vendor-invoices.example; dmarc=pass
+ header.from=vendor-invoices.example
+From: "Accounts Payable" <billing@vendor-invoices.example>
+To: joe@recipient.example
+Subject: Overdue invoice and remittance details
+Date: Tue, 24 Nov 2026 09:10:00 -0500
+Message-ID: <inv-7781@vendor-invoices.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6718062377464965760=="
+
+--===============6718062377464965760==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+Please review the attached overdue invoice and remittance form today.
+
+Thanks,
+Accounts Payable
+
+--===============6718062377464965760==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoice.pdf.exe"
+MIME-Version: 1.0
+
+TVpUaGlzIGlzIGhhcm1sZXNzIHRlc3QgZGF0YSBmb3IgYSBwaGlzaGluZyBkZXRlY3Rvci4gTm90
+IGEgcmVhbCBmaWxlLg==
+
+--===============6718062377464965760==
+Content-Type: text/html
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Remittance_Advice.html"
+MIME-Version: 1.0
+
+PGh0bWw+PGJvZHk+ZmFrZSBsb2dpbiBwYWdlIHBsYWNlaG9sZGVyPC9ib2R5PjwvaHRtbD4=
+
+--===============6718062377464965760==
+Content-Type: application/vnd.ms-word.document.macroEnabled.12
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Q4_Bonus.docm"
+MIME-Version: 1.0
+
+UEsDBFRoaXMgaXMgaGFybWxlc3MgdGVzdCBkYXRhIGZvciBhIHBoaXNoaW5nIGRldGVjdG9yLiBO
+b3QgYSByZWFsIGZpbGUu
+
+--===============6718062377464965760==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Scan_0042.pdf"
+MIME-Version: 1.0
+
+TVpUaGlzIGlzIGhhcm1sZXNzIHRlc3QgZGF0YSBmb3IgYSBwaGlzaGluZyBkZXRlY3Rvci4gTm90
+IGEgcmVhbCBmaWxlLg==
+
+--===============6718062377464965760==--

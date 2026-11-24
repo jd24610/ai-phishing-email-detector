@@ -1,0 +1,4 @@
+# Only needed to RETRAIN the model (ml/train_model.py).
+# The detector itself runs on plain Python with no extra packages.
+pandas>=2.0
+scikit-learn>=1.3

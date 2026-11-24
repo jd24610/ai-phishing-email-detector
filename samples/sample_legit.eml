@@ -1,0 +1,24 @@
+Return-Path: <bounces@mail.shop.example>
+Received: from mail.shop.example (mail.shop.example [198.51.100.20])
+	by mx.recipient.example with ESMTPS id xyz789
+	for <joe@recipient.example>; Mon, 23 Nov 2026 10:02:11 -0500
+Authentication-Results: mx.recipient.example;
+	spf=pass smtp.mailfrom=mail.shop.example;
+	dkim=pass header.d=shop.example;
+	dmarc=pass header.from=shop.example
+From: "Shop Example" <orders@shop.example>
+To: joe@recipient.example
+Subject: Your order #48213 has shipped
+Date: Mon, 23 Nov 2026 10:02:00 -0500
+Message-ID: <order-48213@mail.shop.example>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Hi Joe,
+
+Good news. Your order #48213 has shipped and should arrive Thursday.
+
+You can track it from your account page on our website.
+
+Thanks,
+Shop Example

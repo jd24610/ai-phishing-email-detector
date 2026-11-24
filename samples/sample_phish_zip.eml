@@ -1,0 +1,62 @@
+Return-Path: <docs@shared-files.example>
+Authentication-Results: mx.recipient.example; spf=pass
+ smtp.mailfrom=shared-files.example; dkim=pass header.d=shared-files.example;
+ dmarc=pass header.from=shared-files.example
+From: "Document Share" <docs@shared-files.example>
+To: joe@recipient.example
+Subject: Shared documents for your review
+Date: Tue, 24 Nov 2026 12:40:00 -0500
+Message-ID: <docs-3391@shared-files.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2502572065544355713=="
+
+--===============2502572065544355713==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+The documents you asked for are attached.
+The password for Secure_Files.zip is 4471.
+
+Regards
+
+--===============2502572065544355713==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Invoice_2026.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAApleF02kpHXQQAAAEEAAAAhAAAASW52b2ljZV8yMDI2L0ludm9pY2VfMjAyNi5w
+ZGYuZXhlTVpIYXJtbGVzcyB0ZXN0IGRhdGEgZm9yIGEgcGhpc2hpbmcgZGV0ZWN0b3IuIE5vdCBh
+IHJlYWwgcHJvZ3JhbS5QSwMEFAAAAAAACmV4XWUjf2oRAAAAEQAAABcAAABJbnZvaWNlXzIwMjYv
+cmVhZG1lLnR4dE9wZW4gdGhlIGludm9pY2UuUEsBAhQDFAAAAAAACmV4XTaSkddBAAAAQQAAACEA
+AAAAAAAAAAAAAIABAAAAAEludm9pY2VfMjAyNi9JbnZvaWNlXzIwMjYucGRmLmV4ZVBLAQIUAxQA
+AAAAAApleF1lI39qEQAAABEAAAAXAAAAAAAAAAAAAACAAYAAAABJbnZvaWNlXzIwMjYvcmVhZG1l
+LnR4dFBLBQYAAAAAAgACAJQAAADGAAAAAAA=
+
+--===============2502572065544355713==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Secure_Files.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAQAAAApleF1WXcFSSAAAAEgAAAANAAAAc3RhdGVtZW50LnBkZiVQREYtMS40IEhhcm1s
+ZXNzIHRlc3QgZGF0YSBmb3IgYSBwaGlzaGluZyBkZXRlY3Rvci4gTm90IGEgcmVhbCBwcm9ncmFt
+LlBLAQIUAxQAAQAAAApleF1WXcFSSAAAAEgAAAANAAAAAAAAAAAAAACAAQAAAABzdGF0ZW1lbnQu
+cGRmUEsFBgAAAAABAAEAOwAAAHMAAAAAAA==
+
+--===============2502572065544355713==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Archive.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAApleF1jpzg/tQAAALUAAAAJAAAAaW5uZXIuemlwUEsDBBQAAAAAAApleF20LpSo
+PwAAAD8AAAAKAAAAcGF5bG9hZC5qc0hhcm1sZXNzIHRlc3QgZGF0YSBmb3IgYSBwaGlzaGluZyBk
+ZXRlY3Rvci4gTm90IGEgcmVhbCBwcm9ncmFtLlBLAQIUAxQAAAAAAApleF20LpSoPwAAAD8AAAAK
+AAAAAAAAAAAAAACAAQAAAABwYXlsb2FkLmpzUEsFBgAAAAABAAEAOAAAAGcAAAAAAFBLAQIUAxQA
+AAAAAApleF1jpzg/tQAAALUAAAAJAAAAAAAAAAAAAACAAQAAAABpbm5lci56aXBQSwUGAAAAAAEA
+AQA3AAAA3AAAAAAA
+
+--===============2502572065544355713==--

@@ -1,0 +1,21 @@
+Return-Path: <notify@parcel-alerts.example>
+Authentication-Results: mx.recipient.example;
+	spf=pass smtp.mailfrom=parcel-alerts.example;
+	dkim=pass header.d=parcel-alerts.example;
+	dmarc=pass header.from=parcel-alerts.example
+From: "Delivery Notice" <notify@parcel-alerts.example>
+To: joe@recipient.example
+Subject: Package on hold: action required
+Date: Tue, 24 Nov 2026 08:30:00 -0500
+Message-ID: <hold-5521@parcel-alerts.example>
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Your package could not be delivered. Pay the $1.99 redelivery fee to release it.</p>
+<p><a href="http://203.0.113.77/redeliver">Pay fee now</a></p>
+<p><a href="https://paypal.com@pay-portal.example/checkout">https://paypal.com/checkout</a></p>
+<p><a href="https://paypal.com.secure-checkout.example/login">Log in with PayPal</a></p>
+<p><a href="https://bit.ly/3xAmPle">Track your package</a></p>
+<p><a href="javascript:alert('x')">Cancel delivery</a></p>
+</body></html>

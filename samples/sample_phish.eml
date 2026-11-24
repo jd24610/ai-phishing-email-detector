@@ -1,0 +1,53 @@
+Return-Path: <bounce@mailer-7731.example>
+Received: from mailer-7731.example (unknown [203.0.113.45])
+	by mx.recipient.example with ESMTP id abc123
+	for <joe@recipient.example>; Mon, 23 Nov 2026 09:14:02 -0500
+Authentication-Results: mx.recipient.example;
+	spf=fail smtp.mailfrom=mailer-7731.example;
+	dkim=none;
+	dmarc=fail header.from=northbridge-bank-alerts.example
+From: "Northbridge Bank Security" <security@northbridge-bank-alerts.example>
+Reply-To: northbridge.support.team@freemail.example
+To: joe@recipient.example
+Subject: URGENT: Your account has been suspended
+Date: Mon, 23 Nov 2026 09:14:00 -0500
+Message-ID: <fake-1234@mailer-7731.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY_OUTER"
+
+--BOUNDARY_OUTER
+Content-Type: multipart/alternative; boundary="BOUNDARY_INNER"
+
+--BOUNDARY_INNER
+Content-Type: text/plain; charset="utf-8"
+
+Dear Customer,
+
+We detected unusual activity on your account. Your account has been
+suspended. Verify your identity within 24 hours or it will be closed.
+
+Verify here: http://northbridge-verify.example/login.php
+
+Northbridge Bank Security Team
+
+--BOUNDARY_INNER
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Dear Customer,</p>
+<p>We detected unusual activity on your account. Your account has been
+suspended. Verify your identity within 24 hours or it will be closed.</p>
+<p><a href="http://northbridge-verify.example/login.php">https://www.northbridgebank.example/secure-login</a></p>
+<p>Northbridge Bank Security Team</p>
+</body></html>
+
+--BOUNDARY_INNER--
+
+--BOUNDARY_OUTER
+Content-Type: application/pdf; name="Account_Statement.pdf"
+Content-Disposition: attachment; filename="Account_Statement.pdf"
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBhIGZha2UgYXR0YWNobWVudCBmb3IgdGVzdGluZy4gSXQgaXMgbm90IGEgcmVhbCBQREYu
+
+--BOUNDARY_OUTER--

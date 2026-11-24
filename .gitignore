@@ -1,0 +1,13 @@
+# Secrets: never commit API keys
+.env
+
+# Python clutter
+__pycache__/
+*.pyc
+.venv/
+
+# Real emails you test with may hold private info. Keep them out of GitHub.
+private_samples/
+
+# Training dataset (52 MB, public). Download it instead of committing it.
+data/
