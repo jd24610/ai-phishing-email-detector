@@ -60,3 +60,4 @@ jobs:
           expect sample_phish_links.eml  "LIKELY PHISHING"
           expect sample_phish_attach.eml "LIKELY PHISHING"
           expect sample_phish_zip.eml    "LIKELY PHISHING"
+          expect sample_phish_html.eml   "LIKELY PHISHING"

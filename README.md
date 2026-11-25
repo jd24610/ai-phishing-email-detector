@@ -35,6 +35,7 @@ That email passes SPF, DKIM, and DMARC, and it has no links or attachments. A he
 | **Sender** | Lookalike domains (`paypa1.com`, `paypa1.co.uk`, `rnicrosoft.com`), typo-squats (`amazom.com`), brand names stuffed into fake domains, punycode domains, display names that claim a brand or hide a fake address, "official" names sent from free email accounts. |
 | **Links** | Link text that shows one site but goes to another, raw IP links, the `@` trick (`paypal.com@evil.com`), brands used as fake subdomains (`paypal.com.evil.com`), `javascript:` links, URL shorteners. Links are never opened. |
 | **Attachments** | Dangerous file types, double extensions (`invoice.pdf.exe`), the right-to-left text trick, macro-enabled Office files, HTML attachments, files whose bytes don't match their name, and zip archives: programs hidden inside, password-protected zips, zips inside zips. Files are never opened or unzipped. |
+| **HTML tricks** | Login forms built into the email (especially ones asking for a password or card number, and where they send it), large amounts of hidden text used to fool spam filters, and hidden characters spliced inside words (`Pay<hidden>x</hidden>Pal`). Catches `display:none`, `visibility:hidden`, zero opacity, tiny fonts, and white-on-white text. A short hidden inbox preview line, which many real newsletters use, is not flagged. |
 | **Wording** | Scam tactics: gift card and wire requests, password requests, threats, secrecy, "new bank details," prizes, urgency. Also catches combos like money plus secrecy (CEO fraud). |
 | **ML model** | A text classifier I trained on 17,500 labeled emails (experimental, see below). |
 
@@ -61,7 +62,7 @@ cd ai-phishing-email-detector
 python3 main.py samples/sample_ceo_fraud.eml
 python3 main.py samples/sample_phish.eml --details   # also shows the parsed email
 
-python3 -m unittest discover tests                    # 115 tests (also run on GitHub for every push)
+python3 -m unittest discover tests                    # 138 tests (also run on GitHub for every push)
 ```
 
 ### Web page
@@ -151,6 +152,7 @@ detector/
   brands.py              Brands to protect and their real domains
   urls.py                Link checks (offline)
   attachments.py         File type, double extension, zip contents
+  html_tricks.py         Login forms and hidden text in HTML emails
   language.py            Scam wording rules
   ml.py                  Pure-Python predictor for the trained model
   scoring.py             Combines everything into one verdict
@@ -159,7 +161,7 @@ detector/
   data/public_suffix_list.dat  Offline copy of publicsuffix.org's list (MPL 2.0)
 ml/train_model.py        Training and evaluation script
 samples/                 Test emails (all fake, all safe)
-tests/                   115 unit tests
+tests/                   138 unit tests
 ```
 
 ## Known limitations
@@ -178,7 +180,7 @@ tests/                   115 unit tests
 - [x] Wording rules
 - [x] Trained ML model (experimental)
 - [x] Zip archive inspection
-- [ ] HTML tricks: hidden text, login forms inside emails
+- [x] HTML tricks: hidden text, login forms inside emails
 - [x] Public Suffix List for correct domain handling
 - [x] Local web page to drop emails into
 - [ ] Retrain the model on modern email

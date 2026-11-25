@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 
 from detector.attachments import analyze_attachments
 from detector.headers import analyze_headers
+from detector.html_tricks import analyze_html
 from detector.language import analyze_language
 from detector.ml import analyze_ml
 from detector.sender import analyze_sender
@@ -107,6 +108,7 @@ def analyze_email(email):
         "Sender": analyze_sender(email),
         "Links": analyze_urls(email),
         "Attachments": analyze_attachments(email),
+        "HTML tricks": analyze_html(email),
         "Wording": analyze_language(email),
         "ML model": analyze_ml(email),
     }
