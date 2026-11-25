@@ -1,5 +1,7 @@
 # AI Phishing Email Detector
 
+[![Tests](https://github.com/jd24610/ai-phishing-email-detector/actions/workflows/tests.yml/badge.svg)](https://github.com/jd24610/ai-phishing-email-detector/actions/workflows/tests.yml)
+
 A phishing email detector written in Python. Give it a raw email file (`.eml`) and it tells you how risky the email is and why.
 
 It runs fully offline. No paid APIs, no cloud AI, and no email text ever leaves your machine. The core tool uses only Python's standard library.
@@ -59,7 +61,7 @@ cd ai-phishing-email-detector
 python3 main.py samples/sample_ceo_fraud.eml
 python3 main.py samples/sample_phish.eml --details   # also shows the parsed email
 
-python3 -m unittest discover tests                    # 115 tests
+python3 -m unittest discover tests                    # 115 tests (also run on GitHub for every push)
 ```
 
 ### Web page

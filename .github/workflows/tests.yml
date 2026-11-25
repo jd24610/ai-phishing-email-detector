@@ -1,0 +1,62 @@
+# Runs the test suite and the command-line tool on every push and pull request.
+# The detector only uses Python's standard library, so nothing is installed.
+
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:   # lets you start a run by hand from the Actions tab
+
+permissions:
+  contents: read       # read-only: this workflow never writes to the repo
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.x"]   # oldest supported, and the newest release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Unit tests
+        run: python -m unittest discover tests -v
+
+      - name: Command-line tool on every sample
+        shell: bash
+        run: |
+          for f in samples/*.eml; do
+            echo "::group::$f"
+            python main.py "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Verdicts are what we expect
+        shell: bash
+        run: |
+          set -e
+          expect() {
+            out=$(python main.py "samples/$1")
+            echo "$out" | grep -q "VERDICT: $2" || { echo "::error::$1 should be '$2'"; echo "$out"; exit 1; }
+            echo "ok: $1 -> $2"
+          }
+          expect sample_legit.eml        "LOW RISK"
+          expect sample_phish.eml        "LIKELY PHISHING"
+          expect sample_ceo_fraud.eml    "LIKELY PHISHING"
+          expect sample_phish_links.eml  "LIKELY PHISHING"
+          expect sample_phish_attach.eml "LIKELY PHISHING"
+          expect sample_phish_zip.eml    "LIKELY PHISHING"
