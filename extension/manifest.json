@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Phishing Email Detector",
-  "version": "0.1.0",
-  "description": "Scans the Gmail messages you open for phishing, using the detector running on your own computer. Emails never leave your machine.",
+  "version": "0.2.0",
+  "description": "Scans the Gmail messages you open for phishing. The detector runs inside Chrome, so emails never leave your computer.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl/epWFX62DqEv6QmeV1a0eREhssvaZEn/N5MpoKhZL2hizOfOIxJVWLKdHNebSSavYJ0iC5yyLPWzYYkenMp3UjHgAMW2xeBIKqs62zGvSVvhYtE7JYNeTMdfgHgC5T/H9XIGeuSsoy01FjSZ0SViVxcMdZlOivVE+6G+fJKffp3tIPdRaKdSk95a5Ha6zw+oahxuhQakSHdLUvuOuviW137LstCJj7nTaTPtdiW2Er6ixpwCW4t6+Ndpll9BexNZyMNHkrJZxlxhWwc0G8hhH1B0a+H1b8XK9RxgF/Re3nj9PxwLZnzRjuSL/JhyK6rit5zI6hcai188n6fkPTeXwIDAQAB",
   "permissions": [
-    "storage"
+    "storage",
+    "offscreen"
   ],
   "host_permissions": [
-    "https://mail.google.com/*",
-    "http://127.0.0.1:8765/*"
+    "https://mail.google.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -42,6 +42,9 @@
     "128": "icons/128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'"
-  }
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'"
+  },
+  "optional_host_permissions": [
+    "http://127.0.0.1:8765/*"
+  ]
 }

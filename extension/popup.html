@@ -9,18 +9,24 @@
 
   <div class="row">
     <span>Detector</span>
-    <span id="server" class="pill">Checking...</span>
+    <span id="status" class="pill">Checking...</span>
   </div>
-  <p id="help" class="help" hidden>
-    Start it on your computer:<br><code>python3 server.py</code>
-  </p>
+  <p id="help" class="help" hidden></p>
 
   <label class="row toggle">
     <span>Scan emails when I open them</span>
     <input id="auto" type="checkbox">
   </label>
 
-  <p class="foot">Emails are only sent to the detector on this computer. Nothing goes online.</p>
+  <details>
+    <summary>Advanced</summary>
+    <label class="row toggle">
+      <span>Use local server instead<br><small>For development. Needs <code>python3 server.py</code>.</small></span>
+      <input id="server" type="checkbox">
+    </label>
+  </details>
+
+  <p class="foot">Everything runs on this computer. Emails are never sent online.</p>
   <script src="popup.js"></script>
 </body>
 </html>

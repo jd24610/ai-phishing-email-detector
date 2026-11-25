@@ -1,0 +1,66 @@
+[
+ {
+  "path": "detector/__init__.py",
+  "sha256": "21e9afdcef8bec86dc114c63a0aa79687682df7ddce1026673ae23c51bb61da0"
+ },
+ {
+  "path": "detector/attachments.py",
+  "sha256": "5ceb5aa53af1f7036e7bdfd205bc528b5f733320dbb1dcd60a5c5b9955a76ff6"
+ },
+ {
+  "path": "detector/brands.py",
+  "sha256": "c112f3f4fe1e133eb605510887b62aa1ae7b234b68a5d3e207f72efcf183223a"
+ },
+ {
+  "path": "detector/data/public_suffix_list.dat",
+  "sha256": "cd1866797f7e9707269cabaf71e46f522299efadd504cdcd429af486bb620de2"
+ },
+ {
+  "path": "detector/findings.py",
+  "sha256": "a2cbea8b1d16be84192312ee3377333161f0ddd690cc2289df1a7ad835541c05"
+ },
+ {
+  "path": "detector/headers.py",
+  "sha256": "e619358241de6bfc87fbd364ea47e29a4d9d946f8b7a3a651f0c2a8b56d5b753"
+ },
+ {
+  "path": "detector/html_tricks.py",
+  "sha256": "b819ed8df6f04458c77c9fbc6d7cfb82d3a6cdef7883f92d8720f23cef969d26"
+ },
+ {
+  "path": "detector/language.py",
+  "sha256": "a95471b2406459e65c318bd2d970c554ebf0500eb74b6b07771562be59f8c585"
+ },
+ {
+  "path": "detector/ml.py",
+  "sha256": "e0622acf2de0468720a647f4667ac142d607ebe40ca8f17f8dcd0eae9a0e6b6c"
+ },
+ {
+  "path": "detector/model/phish_model.json",
+  "sha256": "41591058245b9afaf704527af7f9c5ea528f659dde313ba019bc2513ed2e3f36"
+ },
+ {
+  "path": "detector/parser.py",
+  "sha256": "c5e315f846738cd911ddc7ad1edb8a55c72d72cc9efe703054ecce12b608da97"
+ },
+ {
+  "path": "detector/report.py",
+  "sha256": "377723c14c6ceac15203982ae3f6ef0250a84ac32bac8351cbae76823a9a52ad"
+ },
+ {
+  "path": "detector/scoring.py",
+  "sha256": "ee6df988b8c8e6b5afee87230bc7b9b30b391b98c0ad4721befc45dfe3d1ff37"
+ },
+ {
+  "path": "detector/sender.py",
+  "sha256": "2c25d99d575cdbc44c41cc9b1d56b987a8cdbed8ca8fc5762a8404610a1d4b6f"
+ },
+ {
+  "path": "detector/suffixes.py",
+  "sha256": "90d82756ee30eff23506353056b75cfdf8fb11020820d13bf6da55cfb1fc1e77"
+ },
+ {
+  "path": "detector/urls.py",
+  "sha256": "c52b66531e9a822b96872dcc5c5b13af97089e7254958cd899c9af0530ba0361"
+ }
+]

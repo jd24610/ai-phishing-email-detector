@@ -32,6 +32,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from detector.parser import MAX_EMAIL_SIZE, EmailParseError, parse_email
+from detector.report import report_to_dict
 from detector.scoring import analyze_email
 
 HOST = "127.0.0.1"
@@ -70,33 +71,6 @@ def extension_origins():
     ids = {OUR_EXTENSION_ID}
     ids |= {i.strip() for i in os.environ.get("PHISH_EXTENSION_IDS", "").split(",") if i.strip()}
     return {f"chrome-extension://{i}" for i in ids}
-
-
-def report_to_dict(email, report):
-    """Turn a Report into plain JSON. Leaves out the email body on purpose."""
-    def finding(f):
-        return {"check": f.check, "severity": f.severity, "message": f.message}
-
-    return {
-        "verdict": report.verdict,
-        "score": report.score,
-        "advice": report.advice,
-        "email": {
-            "from_name": email.from_name,
-            "from_address": email.from_address,
-            "subject": email.subject,
-            "links": len(email.links),
-            "attachments": len(email.attachments),
-        },
-        "auth": report.auth,
-        "top_reasons": [finding(f) for f in report.top_reasons],
-        "categories": [
-            {"name": name, "points": report.category_points[name],
-             "findings": [finding(f) for f in findings]}
-            for name, findings in report.by_category.items()
-        ],
-        "notes": report.notes,
-    }
 
 
 class Handler(BaseHTTPRequestHandler):

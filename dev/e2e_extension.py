@@ -2,11 +2,14 @@
 End-to-end test for the Chrome extension, using a FAKE Gmail.
 
 What it does:
-1. Starts the local detector server.
-2. Opens Chrome with the extension loaded.
+1. Opens Chrome with the extension loaded. NO server is started: the
+   extension must work on its own with its built-in (Pyodide) detector.
+2. Checks the built-in detector gives the exact same report as the
+   Python detector for every sample email.
 3. Answers every request to mail.google.com with a fake Gmail page we
    control, including fake "Show original" pages built from our samples.
-4. Opens emails and checks that the extension scans them and shows banners.
+4. Opens emails and checks that the extension scans them, gets the right
+   verdict, and shows banners.
 5. Saves screenshots to dev/screenshots/.
 
 This is a developer tool. It needs Playwright and a Chrome that can load
@@ -21,17 +24,21 @@ Real Gmail can change those at any time, so also test on real Gmail.
 
 import argparse
 import html
-from urllib.parse import parse_qs, urlsplit
+import json
 import tempfile
-import threading
+import time
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 import sys
 sys.path.insert(0, str(ROOT))
-from server import OUR_EXTENSION_ID, make_server  # noqa: E402
+from detector.parser import parse_email  # noqa: E402
+from detector.report import report_to_dict  # noqa: E402
+from detector.scoring import analyze_email  # noqa: E402
+from server import OUR_EXTENSION_ID  # noqa: E402
 
 EXT = ROOT / "extension"
 SHOTS = ROOT / "dev" / "screenshots"
@@ -102,10 +109,23 @@ def open_email(page, hex_id, sender, subject, body):
 
 
 def wait_for_banner(page, text_hint, timeout=8000):
-    """The banner's shadow root is closed, so we wait on the server instead."""
+    """Wait for the banner (its shadow root is closed, so we can't read inside it)."""
     page.wait_for_timeout(300)
     page.wait_for_function("() => !!document.querySelector('phish-detector-banner')", timeout=timeout)
     page.wait_for_timeout(1500)  # give the scan time to finish and render
+
+
+# Count scans and record verdicts from inside the extension's background worker.
+SPY = """() => {
+    if (self.__spy) return;
+    self.__spy = true; self.__scans = 0; self.__verdicts = [];
+    const real = builtinAsk;
+    builtinAsk = async (m) => {
+        const r = await real(m);
+        if (m.type === 'analyze') { self.__scans++; self.__verdicts.push(r.ok ? r.report.verdict : 'error'); }
+        return r;
+    };
+}"""
 
 
 def main():
@@ -114,87 +134,101 @@ def main():
     args = ap.parse_args()
     SHOTS.mkdir(parents=True, exist_ok=True)
 
-    server = make_server(port=8765)
-    requests = []
-    original_log = server.RequestHandlerClass.log_message
-    server.RequestHandlerClass.log_message = lambda self, fmt, *a: requests.append(
-        (self.command, self.path, self.headers.get("Origin"), a[1] if len(a) > 1 else ""))
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    with sync_playwright() as p, tempfile.TemporaryDirectory() as profile:
+        ctx = p.chromium.launch_persistent_context(
+            profile, executable_path=args.chrome, headless=True,
+            viewport={"width": 900, "height": 760}, device_scale_factor=1.5,
+            args=["--no-sandbox", f"--disable-extensions-except={EXT}", f"--load-extension={EXT}"])
+        ctx.route("https://mail.google.com/**", fake_gmail)
+        local_calls = []
+        ctx.on("request", lambda r: "127.0.0.1" in r.url and local_calls.append(r.url))
 
-    try:
-        with sync_playwright() as p, tempfile.TemporaryDirectory() as profile:
-            ctx = p.chromium.launch_persistent_context(
-                profile, executable_path=args.chrome, headless=True,
-                viewport={"width": 900, "height": 760}, device_scale_factor=1.5,
-                args=["--no-sandbox", f"--disable-extensions-except={EXT}", f"--load-extension={EXT}"])
-            ctx.route("https://mail.google.com/**", fake_gmail)
+        # 1. Extension loaded with the expected fixed ID?
+        sw = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
+        ext_id = sw.url.split("/")[2]
+        print(f"Extension loaded. ID: {ext_id} (expected {OUR_EXTENSION_ID})")
+        assert ext_id == OUR_EXTENSION_ID
 
-            # Extension loaded with the expected fixed ID?
-            sw = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
-            ext_id = sw.url.split("/")[2]
-            print(f"Extension loaded. ID: {ext_id} (expected {OUR_EXTENSION_ID})")
-            assert ext_id == OUR_EXTENSION_ID
+        # 2. Built-in detector starts, and matches the Python detector exactly.
+        t = time.time()
+        status = sw.evaluate("""async () => {
+            for (let i = 0; i < 120; i++) {
+                const s = await builtinAsk({ type: 'status' });
+                if (s.status !== 'loading') return s;
+                await new Promise((r) => setTimeout(r, 500));
+            }
+            return { status: 'timeout' };
+        }""")
+        print(f"Built-in detector: {status.get('status')} after {time.time() - t:.1f}s")
+        assert status.get("status") == "ready"
+        for f in sorted(SAMPLES.glob("*.eml")):
+            raw = f.read_bytes().decode("utf-8", errors="replace")
+            got = sw.evaluate("async (raw) => builtinAsk({ type: 'analyze', raw })", raw)
+            email = parse_email(f.read_bytes())
+            want = json.loads(json.dumps(report_to_dict(email, analyze_email(email))))
+            assert got.get("ok") and got["report"] == want, f"{f.name}: built-in differs from Python"
+        print(f"Built-in reports identical to Python for all {len(list(SAMPLES.glob('*.eml')))} samples")
 
-            page = ctx.new_page()
-            page.goto("https://mail.google.com/mail/u/0/#inbox")
+        sw.evaluate(SPY)
+        page = ctx.new_page()
+        page.goto("https://mail.google.com/mail/u/0/#inbox")
 
-            checks = [
-                ("18c2f0a1b2c3d4e5", "ceo_fraud", "Are you at your desk? I need you to handle something for me quickly..."),
-                ("18c2f0a1b2c3d4e6", "legit", "Good news. Your order #48213 has shipped and should arrive Thursday."),
-                ("18c2f0a1b2c3d4e7", "links", "Your package could not be delivered. Pay the $1.99 redelivery fee."),
-            ]
-            for hex_id, name, body in checks:
-                _, sender, subject = MESSAGES[hex_id]
-                open_email(page, hex_id, sender, subject, body)
-                wait_for_banner(page, name)
-                page.screenshot(path=str(SHOTS / f"gmail_{name}.png"))
-                print(f"Opened {name}: banner shown")
+        # 3. Open emails in fake Gmail: right verdict on each.
+        checks = [
+            ("18c2f0a1b2c3d4e5", "ceo_fraud", "Are you at your desk? I need you to handle something for me quickly...", "Likely phishing"),
+            ("18c2f0a1b2c3d4e6", "legit", "Good news. Your order #48213 has shipped and should arrive Thursday.", "Low risk"),
+            ("18c2f0a1b2c3d4e7", "links", "Your package could not be delivered. Pay the $1.99 redelivery fee.", "Likely phishing"),
+        ]
+        for hex_id, name, body, expected in checks:
+            _, sender, subject = MESSAGES[hex_id]
+            open_email(page, hex_id, sender, subject, body)
+            wait_for_banner(page, name)
+            page.screenshot(path=str(SHOTS / f"gmail_{name}.png"))
+            verdict = sw.evaluate("() => self.__verdicts.at(-1)")
+            print(f"Opened {name}: banner shown, verdict '{verdict}' (expected '{expected}')")
+            assert verdict == expected
 
-            # Gmail "Show original" fails -> friendly error, no crash
-            open_email(page, MISSING_ID, "Someone", "Broken one", "hello")
-            wait_for_banner(page, "missing")
-            page.screenshot(path=str(SHOTS / "gmail_error.png"))
-            print("Opened message with no original: error banner shown")
+        # 4. Gmail "Show original" fails -> friendly error, no crash
+        open_email(page, MISSING_ID, "Someone", "Broken one", "hello")
+        wait_for_banner(page, "missing")
+        page.screenshot(path=str(SHOTS / "gmail_error.png"))
+        print("Opened message with no original: error banner shown")
 
-            # Re-opening an email uses the saved result instead of scanning again
-            before = sum(1 for r in requests if r[1] == "/api/analyze")
-            _, sender, subject = MESSAGES["18c2f0a1b2c3d4e5"]
-            open_email(page, "18c2f0a1b2c3d4e5", sender, subject, "again")
-            wait_for_banner(page, "again")
-            after = sum(1 for r in requests if r[1] == "/api/analyze")
-            print(f"Re-opened an email: {after - before} new scans (expected 0)")
-            assert after == before
+        # 5. Re-opening an email uses the saved result instead of scanning again
+        before = sw.evaluate("() => self.__scans")
+        _, sender, subject = MESSAGES["18c2f0a1b2c3d4e5"]
+        open_email(page, "18c2f0a1b2c3d4e5", sender, subject, "again")
+        wait_for_banner(page, "again")
+        after = sw.evaluate("() => self.__scans")
+        print(f"Re-opened an email: {after - before} new scans (expected 0)")
+        assert after == before
 
-            # Popup
-            popup = ctx.new_page()
-            popup.set_viewport_size({"width": 300, "height": 260})
-            popup.goto(f"chrome-extension://{ext_id}/popup.html")
-            popup.wait_for_timeout(800)
-            popup.screenshot(path=str(SHOTS / "popup.png"))
-            print("Popup says detector is:", popup.text_content("#server"))
+        # 6. Popup
+        popup = ctx.new_page()
+        popup.set_viewport_size({"width": 300, "height": 300})
+        popup.goto(f"chrome-extension://{ext_id}/popup.html")
+        popup.wait_for_timeout(800)
+        popup.screenshot(path=str(SHOTS / "popup.png"))
+        print("Popup says detector is:", popup.text_content("#status"))
+        assert "ready" in popup.text_content("#status")
 
-            # Turn auto-scan off: a new email should NOT be scanned
-            popup.click("#auto")
-            popup.wait_for_timeout(300)
-            before = sum(1 for r in requests if r[1] == "/api/analyze")
-            _, sender, subject = MESSAGES["18c2f0a1b2c3d4e6"]
-            page.bring_to_front()
-            open_email(page, "18c2f0a1b2c3d4e6", sender + " ", subject, "auto-scan off test")
-            page.evaluate("() => document.querySelector('[data-legacy-message-id]').setAttribute('data-legacy-message-id', 'aaaaaaaaaaaaaaaa')")
-            page.wait_for_timeout(1500)
-            after = sum(1 for r in requests if r[1] == "/api/analyze")
-            print(f"Auto-scan off: {after - before} new scans (expected 0)")
-            assert after == before
-            ctx.close()
-    finally:
-        server.RequestHandlerClass.log_message = original_log
-        server.shutdown()
-        server.server_close()
+        # 7. Turn auto-scan off: a new email should NOT be scanned
+        popup.click("#auto")
+        popup.wait_for_timeout(300)
+        before = sw.evaluate("() => self.__scans")
+        _, sender, subject = MESSAGES["18c2f0a1b2c3d4e6"]
+        page.bring_to_front()
+        open_email(page, "18c2f0a1b2c3d4e6", sender + " ", subject, "auto-scan off test")
+        page.evaluate("() => document.querySelector('[data-legacy-message-id]').setAttribute('data-legacy-message-id', 'aaaaaaaaaaaaaaaa')")
+        page.wait_for_timeout(1500)
+        after = sw.evaluate("() => self.__scans")
+        print(f"Auto-scan off: {after - before} new scans (expected 0)")
+        assert after == before
+        ctx.close()
 
-    analyze = [r for r in requests if r[1] == "/api/analyze"]
-    origins = {r[2] for r in analyze}
-    print(f"\nServer got {len(analyze)} scan requests, all from: {origins}")
-    assert origins == {f"chrome-extension://{OUR_EXTENSION_ID}"}
+    # 8. Nothing tried to reach a local server.
+    print(f"Requests to 127.0.0.1: {len(local_calls)} (expected 0)")
+    assert not local_calls
     print("ALL EXTENSION CHECKS PASSED")
 
 

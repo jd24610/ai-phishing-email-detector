@@ -7,13 +7,18 @@
 // - The banner lives in a CLOSED shadow root: Gmail's page (or anything
 //   injected into it) can't reach in and change what we show you.
 // - Nothing from the email is ever turned into a clickable link.
-// - The raw email goes to our background worker, which only sends it
-//   to 127.0.0.1. It never goes anywhere else.
+// - The raw email goes to our background worker, which checks it with the
+//   built-in detector (or, if you chose it, the server on 127.0.0.1).
+//   It never goes anywhere else.
 
 (() => {
   const results = new Map();   // message ID -> report (so we don't re-scan)
   const inFlight = new Set();  // message IDs being scanned right now
   let autoScan = true;
+
+  // Tell the extension Gmail is open, so the built-in detector can start
+  // loading before the first email is opened.
+  chrome.runtime.sendMessage({ type: "warmup" });
 
   // ---------- settings ----------
 
@@ -172,7 +177,7 @@
       }
       more.append(ul);
     }
-    box.append(more, el("p", "Checked on your computer by your local phishing detector.", "foot"));
+    box.append(more, el("p", "Checked on your computer. This email was not sent anywhere.", "foot"));
     return box;
   }
 
