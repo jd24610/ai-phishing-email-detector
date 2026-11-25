@@ -30,7 +30,7 @@ That email passes SPF, DKIM, and DMARC, and it has no links or attachments. A he
 | Check | What it catches |
 |---|---|
 | **Headers** | SPF, DKIM, and DMARC results. Reply-To and Return-Path that don't match the sender. Only trusts the top `Authentication-Results` header, because lower ones can be forged. |
-| **Sender** | Lookalike domains (`paypa1.com`, `rnicrosoft.com`), typo-squats (`amazom.com`), brand names stuffed into fake domains, punycode domains, display names that claim a brand or hide a fake address, "official" names sent from free email accounts. |
+| **Sender** | Lookalike domains (`paypa1.com`, `paypa1.co.uk`, `rnicrosoft.com`), typo-squats (`amazom.com`), brand names stuffed into fake domains, punycode domains, display names that claim a brand or hide a fake address, "official" names sent from free email accounts. |
 | **Links** | Link text that shows one site but goes to another, raw IP links, the `@` trick (`paypal.com@evil.com`), brands used as fake subdomains (`paypal.com.evil.com`), `javascript:` links, URL shorteners. Links are never opened. |
 | **Attachments** | Dangerous file types, double extensions (`invoice.pdf.exe`), the right-to-left text trick, macro-enabled Office files, HTML attachments, files whose bytes don't match their name, and zip archives: programs hidden inside, password-protected zips, zips inside zips. Files are never opened or unzipped. |
 | **Wording** | Scam tactics: gift card and wire requests, password requests, threats, secrecy, "new bank details," prizes, urgency. Also catches combos like money plus secrecy (CEO fraud). |
@@ -59,7 +59,7 @@ cd ai-phishing-email-detector
 python3 main.py samples/sample_ceo_fraud.eml
 python3 main.py samples/sample_phish.eml --details   # also shows the parsed email
 
-python3 -m unittest discover tests                    # 101 tests
+python3 -m unittest discover tests                    # 115 tests
 ```
 
 ### Web page
@@ -144,6 +144,7 @@ dev/e2e_extension.py     End-to-end extension test against a fake Gmail
 detector/
   parser.py              Turns a raw .eml into structured data
   headers.py             SPF / DKIM / DMARC and address mismatches
+  suffixes.py            Public Suffix List lookup ('mail.bank.co.uk' -> 'bank.co.uk')
   sender.py              Lookalike domains and display-name tricks
   brands.py              Brands to protect and their real domains
   urls.py                Link checks (offline)
@@ -153,9 +154,10 @@ detector/
   scoring.py             Combines everything into one verdict
   findings.py            Shared Finding type
   model/phish_model.json Trained model weights
+  data/public_suffix_list.dat  Offline copy of publicsuffix.org's list (MPL 2.0)
 ml/train_model.py        Training and evaluation script
 samples/                 Test emails (all fake, all safe)
-tests/                   101 unit tests
+tests/                   115 unit tests
 ```
 
 ## Known limitations
@@ -163,7 +165,7 @@ tests/                   101 unit tests
 - Scoring weights are hand-picked, not learned.
 - Wording rules only catch phrasings on the list, and only in English.
 - Lookalike checks only protect brands listed in `brands.py`.
-- Domain comparison keeps the last two parts, so `bank.co.uk` becomes `co.uk`. Fix planned with the Public Suffix List.
+- Domain endings come from a bundled copy of the Public Suffix List. New endings added after that copy won't be known until it's updated (download `public_suffix_list.dat` from publicsuffix.org over `detector/data/public_suffix_list.dat`).
 - Shortened links can't be checked offline. Only ZIP archives are opened (not RAR/7z), and only one level deep.
 - No online reputation lookups, by design, to stay offline and free.
 
@@ -175,7 +177,7 @@ tests/                   101 unit tests
 - [x] Trained ML model (experimental)
 - [x] Zip archive inspection
 - [ ] HTML tricks: hidden text, login forms inside emails
-- [ ] Public Suffix List for correct domain handling
+- [x] Public Suffix List for correct domain handling
 - [x] Local web page to drop emails into
 - [ ] Retrain the model on modern email
 - [ ] Optional free local LLM (Ollama) for plain-English explanations

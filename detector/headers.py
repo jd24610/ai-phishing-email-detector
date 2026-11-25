@@ -12,6 +12,7 @@ A later "risk scoring" step will weigh all findings together.
 import re
 
 from detector.findings import Finding
+from detector.suffixes import registrable_domain
 
 # Matches pieces like "spf=fail" or "dkim=pass" inside Authentication-Results.
 AUTH_PATTERN = re.compile(r"\b(spf|dkim|dmarc)\s*=\s*([a-z]+)", re.IGNORECASE)
@@ -29,13 +30,12 @@ def domain_of(address):
 def base_domain(domain):
     """
     'mail.bank.example' -> 'bank.example'
+    'mail.bank.co.uk'   -> 'bank.co.uk'
 
-    LIMITATION: this keeps the last two parts only. For domains like
-    'bank.co.uk' it would return 'co.uk', which is wrong. A full fix needs
-    the Public Suffix List. Good enough for now, noted for later.
+    Uses the bundled Public Suffix List, so multi-part endings like 'co.uk'
+    and shared hosts like 'github.io' are handled. See detector/suffixes.py.
     """
-    parts = [p for p in domain.split(".") if p]
-    return ".".join(parts[-2:]) if len(parts) >= 2 else domain
+    return registrable_domain(domain)
 
 
 def read_auth_results(auth_headers):
