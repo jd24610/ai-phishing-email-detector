@@ -12,6 +12,7 @@ are the ones that need you: paying the fee and clicking submit.
 | Privacy policy | `PRIVACY.md` (link: https://github.com/jd24610/ai-phishing-email-detector/blob/main/PRIVACY.md) |
 | Screenshots, 1280x800 | `store/images/screenshot-1` to `-4` |
 | Small promo tile, 440x280 | `store/images/promo-small-440x280.png` |
+| Marquee promo tile, 1400x560 (optional) | `store/images/promo-marquee-1400x560.png` |
 | Store icon, 128x128 | `store/images/icon-128.png` |
 
 To redo the images after changing the extension: `python3 store/make_images.py`.
