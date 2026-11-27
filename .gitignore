@@ -14,3 +14,6 @@ private_samples/
 
 # Screenshots from dev/e2e_extension.py
 dev/screenshots/
+
+# Built store packages (python3 dev/package_extension.py)
+dist/

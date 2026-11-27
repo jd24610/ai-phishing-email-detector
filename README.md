@@ -100,6 +100,9 @@ How it stays private and safe:
 - Its ID is fixed (`amibjogglnglgnopfajdejkgeolfnljd`) by a public key in the manifest, and the local server only accepts this extension.
 - The banner sits in a closed shadow root and shows email text with `textContent` only, so a scam email can't inject code into it or change what it says.
 - The only extra permission in the security policy is `wasm-unsafe-eval`, which Chrome requires to run WebAssembly. No `eval` of JavaScript.
+- The security policy also has `connect-src 'self' http://127.0.0.1:8765`, so Chrome itself blocks the extension's pages from contacting any other server. "Nothing is sent online" is enforced by the browser, not just promised.
+
+Privacy policy: [PRIVACY.md](PRIVACY.md). Chrome Web Store materials (listing text, images, packaging, step-by-step guide): [store/PUBLISHING.md](store/PUBLISHING.md).
 
 Heads up: Gmail has no official API for extensions to read an open email. The extension relies on Gmail's page layout (`data-legacy-message-id`, `.a3s`), its account key (`ik`), and its "Show original" URL. Checked on real Gmail in November 2026: Show original returns 404 without `ik`, Gmail enforces Trusted Types (so `DOMParser` is not used), and Google emails can have 6,000+ characters of headers before `From:`. The fake Gmail in `dev/e2e_extension.py` copies all three. If Google changes those, `extension/gmail.js` is the one file to update. Very large emails may be cut off in Gmail's "Show original" view.
 
@@ -153,6 +156,9 @@ extension/               Chrome extension (Manifest V3) for Gmail
   py/                    Copy of detector/ for the extension (generated)
   pyodide/               Pyodide 314.0.8 (MPL-2.0), unchanged from npm
 dev/build_extension.py   Copies detector/ and Pyodide into the extension
+dev/package_extension.py Builds the Chrome Web Store upload zip
+store/                   Store listing, images, and publishing guide
+PRIVACY.md               Privacy policy
 dev/e2e_extension.py     End-to-end extension test against a fake Gmail
 detector/
   parser.py              Turns a raw .eml into structured data
